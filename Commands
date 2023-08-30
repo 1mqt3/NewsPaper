@@ -1,0 +1,37 @@
+user1 = User.objects.create_user('user1')
+user2 = User.objects.create_user('user2')
+
+author1 = Author.objects.create(user=user1)
+author2 = Author.objects.create(user=user2)
+
+category1 = Category.objects.create(name='Category 1')
+category2 = Category.objects.create(name='Category 2')
+category3 = Category.objects.create(name='Category 3')
+category4 = Category.objects.create(name='Category 4')
+
+post1 = Post.objects.create(author=author1, post_type='article', title='Article 1', text='Text for article 1')
+post2 = Post.objects.create(author=author2, post_type='article', title='Article 2', text='Text for article 2')
+post3 = Post.objects.create(author=author1, post_type='news', title='News 1', text='Text for news 1')
+
+post1.categories.add(category1)
+post2.categories.add(category2, category3)
+post3.categories.add(category4)
+
+comment1 = Comment.objects.create(post=post1, user=user1, text='Всем привет')
+comment2 = Comment.objects.create(post=post1, user=user2, text='Пишу уже второй раз')
+comment3 = Comment.objects.create(post=post2, user=user1, text=':((((')
+comment4 = Comment.objects.create(post=post3, user=user2, text='123!!!')
+
+post1.like()
+post2.dislike()
+comment1.like()
+comment4.dislike()
+
+author1.update_rating()
+author2.update_rating()
+
+best_post = Post.objects.filter(post_type='article').order_by('-rating').first()
+print(f'Лучший пост: {best_post.title}, Дата: {best_post.created_at}, Автор: {best_post.author.user.username}, Рейтинг: {best_post.rating}, Превью: {best_post.preview()}')
+
+for comment in best_post.comments.all():
+    print(f'Комментарий: {comment.text}, Дата: {comment.created_at}, Пользователь: {comment.user.username}, Рейтинг: {comment.rating}')
