@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 
 
 class Author(models.Model):
@@ -28,7 +29,7 @@ class Post(models.Model):
     post_type = models.CharField(max_length=1, choices=POST_TYPE, default=article)
     created = models.DateTimeField(auto_now_add=True)
     cats = models.ManyToManyField(Category, through='PostCategory')
-    title = models.CharField(max_length=256)
+    title = models.CharField(max_length=50)
     text = models.TextField()
     rating = models.IntegerField(default=0)
 
@@ -40,9 +41,14 @@ class Post(models.Model):
         self.rating -= 1
         self.save()
 
-    def preview(self):
-        size = 124 if len(self.text) > 124 else len(self.text)
-        return self.text[:size] + '...'
+    # def preview(self):
+    #     size = 124 if len(self.text) > 124 else len(self.text)
+    #     return self.text[:size] + '...'
+    def __str__(self):
+        return f'{self.title}: {self.text[:10]}'
+
+    def get_absolute_url(self):
+        return reverse('news-detail', args=[str(self.id)])
 
 
 class PostCategory(models.Model):

@@ -1,0 +1,45 @@
+{% extends 'news/default.html' %}
+
+{% load custom_filter %}
+{% load custom_tags %}
+
+{% block title %}Новости на сайте{% endblock %}
+
+{% block content %}
+
+    <form action="" method="get">
+       {# Переменная, которую мы передали через контекст, может сгенерировать нам форму с полями #}
+       {{ filterset.form.as_p }}
+       {# Добавим кнопку отправки данных формы #}
+       <input type="submit" value="Найти" />
+    </form>
+
+    <div class="features">
+        <h1>Новости на сайте</h1>
+            {% for el in posts %}
+            <div class="alert alert-warning">
+                <h3>{{ el.title|censor }}</h3>
+                <p>{{ el.text|linebreaks|truncatewords:40|censor }}</p>
+                <a href="{% url 'news-detail' el.id %}" class="btn btn-warning"> Читать статью</a>
+            </div>
+            {% endfor %}
+    </div>
+    {% if page_obj.has_previous %}
+       <a href="?{% url_replace page=1 %}">1</a>
+       {% if page_obj.previous_page_number != 1 %}
+           ...
+           <a href="?{% url_replace page=page_obj.previous_page_number %}">{{ page_obj.previous_page_number }}</a>
+        {% endif %}
+    {% endif %}
+
+    {{ page_obj.number }}
+
+    {% if page_obj.has_next %}
+       <a href="?{% url_replace page=page_obj.next_page_number %}">{{ page_obj.next_page_number }}</a>
+       {% if paginator.num_pages != page_obj.next_page_number %}
+           ...
+           <a href="?{% url_replace page=page_obj.paginator.num_pages %}">{{ page_obj.paginator.num_pages }}</a>
+       {% endif %}
+    {% endif %}
+
+{% endblock content %}
