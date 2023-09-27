@@ -41,9 +41,7 @@ class Post(models.Model):
         self.rating -= 1
         self.save()
 
-    # def preview(self):
-    #     size = 124 if len(self.text) > 124 else len(self.text)
-    #     return self.text[:size] + '...'
+
     def __str__(self):
         return f'{self.title}: {self.text[:10]}'
 

@@ -2,11 +2,13 @@ from django.urls import path
 from . import views
 from .views import *
 
+
 urlpatterns = [
     path('', views.PostsHome.as_view(), name='posts'),
-    path('<int:pk>', views.NewsDetailView.as_view(), name='news-detail'),
-    path('create/', NewsCreate.as_view(), name='news_create'),
-    path('<int:pk>/update/', NewsUpdate.as_view(), name='news_update'),
-    path('<int:pk>/delete/', NewsDelete.as_view(), name='news_delete'),
-    path('create/', NewsCreate.as_view(), name='news_create')
+    path('n/', views.PostsByType.as_view(post_type='n'), name='n_list'),
+    path('p/', views.PostsByType.as_view(post_type='p'), name='p_list'),
+    path('<str:post_type>/<int:pk>', views.NewsDetailView.as_view(), name='news-detail'),
+    path("<str:post_type>/create/", PostCreateView.as_view(), name="post_create"),
+    path("<str:post_type>/<int:pk>/edit/", PostUpdateView.as_view(), name="post_edit"),
+    path("<str:post_type>/<int:pk>/delete/", PostDeleteView.as_view(), name="post_delete"),
 ]

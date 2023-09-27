@@ -2,16 +2,12 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
-from .filters import PostFilter
-from .forms import PostForm
 
+
+from .forms import PostForm, PostFilterForm
 from .models import Post
 
 menu = ["Главная страница", "Посты"]
-
-
-# def index(request):
-#     return render(request, 'news/index.html', {'menu': menu, 'title': 'Главная страница'})
 
 
 class PostsHome(ListView):
@@ -25,60 +21,71 @@ class PostsHome(ListView):
     def get_queryset(self):
         # Получаем обычный запрос
         queryset = super().get_queryset()
-        # Используем наш класс фильтрации.
-        # self.request.GET содержит объект QueryDict, который мы рассматривали
-        # в этом юните ранее.
-        # Сохраняем нашу фильтрацию в объекте класса,
-        # чтобы потом добавить в контекст и использовать в шаблоне.
-        self.filterset = PostFilter(self.request.GET, queryset)
-        # Возвращаем из функции отфильтрованный список товаров
-        return self.filterset.qs
+
+        post_type = self.request.GET.get('post_type', None)
+        if post_type:
+            queryset = queryset.filter(post_type=post_type)
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Добавляем в контекст объект фильтрации.
-        context['filterset'] = self.filterset
+        # Добавляем в контекст объект формы.
+        context['form'] = PostFilterForm(self.request.GET)
         return context
 
 
 class NewsDetailView(DetailView):
     model = Post
-    template_name = 'news/details_view.html'
-    context_object_name = 'post'
+    template_name = 'news/news_detail.html'
+    context_object_name = "post"
+
+    def get_queryset(self):
+        post_type = self.kwargs['post_type']
+        return Post.objects.filter(post_type=post_type)
 
 
-# def post(request, post_id):
-#     return HttpResponse(f'Пост {post_id}')
-
-
-# def create_post(request):
-#     form = PostForm()
-#     if request.method == 'POST':
-#         form = PostForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             return HttpResponseRedirect('/posts/')
-#     return render(request, 'news/news_create.html', {'form': form})
-
-
-class NewsCreate(CreateView):
+class PostCreateView(CreateView):
     model = Post
     form_class = PostForm
     template_name = 'news/news_create.html'
-    
+
     def form_valid(self, form):
-        response = super().form_valid(form)
-        self.success_url = reverse('news-detail', args=[self.object.pk])
-        return response
+        form.instance.author = self.request.user
+        self.object = form.save()
+        self.success_url = reverse(f'{self.kwargs["post_type"]}-detail', args=[self.object.pk])
+        return super().form_valid(form)
 
 
-class NewsUpdate(UpdateView):
+class PostUpdateView(UpdateView):
     form_class = PostForm
     model = Post
     template_name = 'news/news_create.html'
 
+    def get_queryset(self):
+        return Post.objects.filter(post_type=self.kwargs['post_type'])
 
-class NewsDelete(DeleteView):
+    def get_success_url(self):
+        return reverse(f'{self.kwargs["post_type"]}-detail', args=[self.object.pk])
+
+
+class PostDeleteView(DeleteView):
     model = Post
     template_name = 'news/news_delete.html'
-    success_url = reverse_lazy('posts')
+
+    def get_queryset(self):
+        return Post.objects.filter(post_type=self.kwargs['post_type'])
+
+    def get_success_url(self):
+        return reverse("posts")
+    
+    
+class PostsByType(ListView):
+    model = Post
+    template_name = "posts.html"
+    context_object_name = "posts"
+    paginate_by = 6
+    post_type = None
+
+    def get_queryset(self):
+        return Post.objects.filter(post_type=self.post_type)
